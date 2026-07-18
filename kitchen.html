@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>老張小館 · 店家後台</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@500;700;900&family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --ink: #1D3557; --paper: #FAF6EF; --mustard: #E9B44C;
+    --stamp: #B33F3F; --charcoal: #2B2925; --line: #E7DFD0;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--paper); font-family: 'Noto Sans TC', sans-serif; color: var(--charcoal); }
+  .display { font-family: 'Noto Serif TC', serif; }
+
+  .topbar { position: sticky; top: 0; z-index: 20; background: var(--ink); }
+  .topbar-inner { max-width: 900px; margin: 0 auto; padding: 12px 16px; display: flex; align-items: center; justify-content: space-between; }
+  .store-name { font-weight: 700; font-size: 18px; color: var(--mustard); }
+  .view-switch { display: flex; border-radius: 999px; overflow: hidden; border: 1px solid rgba(255,255,255,0.3); }
+  .view-switch button {
+    padding: 6px 14px; font-size: 13px; font-weight: 500; border: none; cursor: pointer;
+    background: transparent; color: #fff;
+  }
+  .view-switch button.active { background: var(--mustard); color: var(--ink); }
+
+  .wrap { max-width: 900px; margin: 0 auto; padding: 16px; }
+  .hint { font-size: 12px; color: #8a8378; margin-bottom: 12px; }
+
+  /* Orders kanban */
+  .kanban { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; }
+  .kanban-col-title { font-size: 12px; font-weight: 700; margin-bottom: 8px; display: flex; align-items: center; gap: 4px; }
+  .ticket {
+    background: #fff; border: 1px solid var(--line); border-radius: 8px; padding: 10px;
+    margin-bottom: 8px; cursor: pointer; text-align: left; width: 100%;
+  }
+  .ticket-top { display: flex; justify-content: space-between; font-size: 10px; color: #b0a99a; margin-bottom: 4px; }
+  .ticket-table { font-size: 12px; font-weight: 700; margin-bottom: 4px; }
+  .ticket-item { font-size: 11px; color: #666; }
+  .empty-col { font-size: 11px; color: #ccc; font-style: italic; padding: 4px 0; }
+
+  /* Menu management */
+  .menu-row {
+    background: #fff; border: 1px solid var(--line); border-radius: 12px; padding: 12px;
+    display: flex; gap: 12px; align-items: center; margin-bottom: 10px;
+  }
+  .menu-thumb {
+    width: 52px; height: 52px; border-radius: 8px; flex-shrink: 0; background-size: cover; background-position:center;
+    display: flex; align-items: center; justify-content: center; font-size: 22px; color: #fff;
+  }
+  .menu-row-info { flex: 1; min-width: 0; }
+  .menu-row-name { font-weight: 700; font-size: 15px; }
+  .menu-row-meta { font-size: 12px; color: #999; }
+  .switch {
+    position: relative; width: 44px; height: 24px; flex-shrink: 0;
+  }
+  .switch input { display: none; }
+  .slider {
+    position: absolute; inset: 0; background: #ccc; border-radius: 999px; cursor: pointer; transition: 0.2s;
+  }
+  .slider::before {
+    content: ""; position: absolute; width: 18px; height: 18px; left: 3px; top: 3px;
+    background: #fff; border-radius: 50%; transition: 0.2s;
+  }
+  .switch input:checked + .slider { background: var(--ink); }
+  .switch input:checked + .slider::before { transform: translateX(20px); }
+  .del-btn {
+    background: none; border: none; color: var(--stamp); font-size: 12px; cursor: pointer; flex-shrink: 0;
+  }
+
+  .add-form {
+    background: #fff; border: 1px solid var(--line); border-radius: 12px; padding: 14px; margin-bottom: 16px;
+  }
+  .add-form h3 { margin: 0 0 10px; font-size: 14px; }
+  .add-form .row { display: flex; gap: 8px; margin-bottom: 8px; flex-wrap: wrap; }
+  .add-form input, .add-form select {
+    padding: 8px 10px; border: 1px solid var(--line); border-radius: 8px; font-size: 13px; flex: 1; min-width: 100px;
+  }
+  .add-btn {
+    background: var(--ink); color: #fff; border: none; padding: 8px 18px; border-radius: 8px;
+    font-size: 13px; font-weight: 700; cursor: pointer;
+  }
+  .section-title { font-size: 14px; font-weight: 700; margin: 16px 0 8px; }
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="topbar-inner">
+    <span class="store-name display">老張小館 · 後台</span>
+    <div class="view-switch">
+      <button id="btnOrders" class="active">訂單</button>
+      <button id="btnMenu">菜單管理</button>
+    </div>
+  </div>
+</div>
+
+<div class="wrap">
+  <div id="ordersView">
+    <div class="hint">依狀態分三欄,點卡片可推進進度(待處理 → 製作中 → 完成)</div>
+    <div class="kanban" id="kanban"></div>
+  </div>
+
+  <div id="menuView" style="display:none;">
+    <div class="add-form">
+      <h3>新增品項</h3>
+      <div class="row">
+        <input id="newName" placeholder="品名" />
+        <select id="newCat">
+          <option>招牌</option><option>湯品</option><option>小菜</option><option>飲料</option>
+        </select>
+        <input id="newPrice" type="number" placeholder="價格" style="max-width:80px;" />
+      </div>
+      <div class="row">
+        <input id="newDesc" placeholder="說明(選填)" />
+        <input id="newPhoto" placeholder="照片網址(選填,沒有就用色塊代替)" />
+      </div>
+      <button class="add-btn" id="addItemBtn">新增</button>
+    </div>
+    <div class="section-title">目前菜單(開關代表今日是否供應)</div>
+    <div id="menuManageList"></div>
+  </div>
+</div>
+
+<script>
+const SUPABASE_URL = "https://yvgqtcfbhrfqxgrwkzr.supabase.co";
+const SUPABASE_ANON_KEY = "sb_publishable_BKME1Mx3eIFELSDkmR6_Ng_iyfumQqy";
+const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+const CATEGORY_COLORS = { "招牌": "#B33F3F", "湯品": "#5C8A8A", "小菜": "#7A8450", "飲料": "#C98A3A" };
+const CATEGORY_EMOJI = { "招牌": "🍚", "湯品": "🍲", "小菜": "🥗", "飲料": "🥤" };
+
+let currentView = "orders";
+document.getElementById("btnOrders").onclick = () => switchView("orders");
+document.getElementById("btnMenu").onclick = () => switchView("menu");
+
+function switchView(v) {
+  currentView = v;
+  document.getElementById("btnOrders").classList.toggle("active", v === "orders");
+  document.getElementById("btnMenu").classList.toggle("active", v === "menu");
+  document.getElementById("ordersView").style.display = v === "orders" ? "block" : "none";
+  document.getElementById("menuView").style.display = v === "menu" ? "block" : "none";
+  if (v === "orders") loadOrders(); else loadMenuManage();
+}
+
+// ---------- Orders kanban ----------
+async function loadOrders() {
+  const { data, error } = await sb.from("orders").select("*").order("created_at", { ascending: false }).limit(60);
+  const kanban = document.getElementById("kanban");
+  if (error) { kanban.innerHTML = `<div class="empty-col">載入失敗:${error.message}</div>`; return; }
+
+  const cols = [
+    { key: "pending", label: "待處理" },
+    { key: "making", label: "製作中" },
+    { key: "done", label: "已完成" }
+  ];
+
+  kanban.innerHTML = cols.map(col => {
+    const orders = (data || []).filter(o => o.status === col.key);
+    return `
+      <div>
+        <div class="kanban-col-title">${col.label}</div>
+        ${orders.length ? orders.map(o => `
+          <button class="ticket" data-id="${o.id}" data-status="${o.status}">
+            <div class="ticket-top"><span>#${o.id.slice(0,4)}</span><span>${new Date(o.created_at).toLocaleTimeString('zh-TW',{hour:'2-digit',minute:'2-digit'})}</span></div>
+            <div class="ticket-table">桌號 ${o.table_no}</div>
+            ${(o.items || []).map(it => `<div class="ticket-item">${it.name} ×${it.qty}</div>`).join("")}
+          </button>
+        `).join("") : `<div class="empty-col">— 無 —</div>`}
+      </div>
+    `;
+  }).join("");
+
+  kanban.querySelectorAll(".ticket").forEach(btn => {
+    btn.onclick = async () => {
+      const id = btn.dataset.id;
+      const status = btn.dataset.status;
+      const next = status === "pending" ? "making" : status === "making" ? "done" : "done";
+      if (next === status) return;
+      await sb.from("orders").update({ status: next }).eq("id", id);
+      loadOrders();
+    };
+  });
+}
+
+// ---------- Menu management ----------
+async function loadMenuManage() {
+  const { data, error } = await sb.from("menu_items").select("*").order("category").order("created_at");
+  const list = document.getElementById("menuManageList");
+  if (error) { list.innerHTML = `<div class="hint">載入失敗:${error.message}</div>`; return; }
+  if (!data || !data.length) { list.innerHTML = `<div class="hint">目前沒有品項,請用上方表單新增</div>`; return; }
+
+  list.innerHTML = data.map(item => {
+    const thumbBg = item.photo_url ? `background-image:url('${item.photo_url}')` : `background:${CATEGORY_COLORS[item.category] || '#999'}`;
+    const emoji = item.photo_url ? "" : (CATEGORY_EMOJI[item.category] || "🍽️");
+    return `
+      <div class="menu-row">
+        <div class="menu-thumb" style="${thumbBg}">${emoji}</div>
+        <div class="menu-row-info">
+          <div class="menu-row-name">${item.name}</div>
+          <div class="menu-row-meta">${item.category} · $${item.price}</div>
+        </div>
+        <label class="switch">
+          <input type="checkbox" data-id="${item.id}" ${item.is_available ? "checked" : ""} />
+          <span class="slider"></span>
+        </label>
+        <button class="del-btn" data-del="${item.id}">刪除</button>
+      </div>
+    `;
+  }).join("");
+
+  list.querySelectorAll("input[type=checkbox]").forEach(cb => {
+    cb.onchange = async () => {
+      await sb.from("menu_items").update({ is_available: cb.checked }).eq("id", cb.dataset.id);
+    };
+  });
+  list.querySelectorAll("[data-del]").forEach(btn => {
+    btn.onclick = async () => {
+      if (!confirm("確定要刪除這個品項嗎?")) return;
+      await sb.from("menu_items").delete().eq("id", btn.dataset.del);
+      loadMenuManage();
+    };
+  });
+}
+
+document.getElementById("addItemBtn").onclick = async () => {
+  const name = document.getElementById("newName").value.trim();
+  const category = document.getElementById("newCat").value;
+  const price = parseInt(document.getElementById("newPrice").value, 10);
+  const description = document.getElementById("newDesc").value.trim();
+  const photo_url = document.getElementById("newPhoto").value.trim();
+
+  if (!name || !price) { alert("請至少填寫品名與價格"); return; }
+
+  const { error } = await sb.from("menu_items").insert({
+    name, category, price, description: description || null, photo_url: photo_url || null, is_available: true
+  });
+  if (error) { alert("新增失敗:" + error.message); return; }
+
+  document.getElementById("newName").value = "";
+  document.getElementById("newPrice").value = "";
+  document.getElementById("newDesc").value = "";
+  document.getElementById("newPhoto").value = "";
+  loadMenuManage();
+};
+
+loadOrders();
+setInterval(() => { if (currentView === "orders") loadOrders(); }, 8000);
+</script>
+</body>
+</html>
