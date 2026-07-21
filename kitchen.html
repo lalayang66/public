@@ -271,6 +271,8 @@ async function loadMenuManage() {
           <span class="slider"></span>
         </label>
        <button class="del-btn" data-edit="${item.id}" data-name="${item.name}" data-category="${item.category}" data-price="${item.price}" data-description="${item.description || ''}" data-photo="${item.photo_url || ''}">編輯</button>
+<button class="del-btn" data-up="${item.id}" data-cat="${item.category}">↑</button>
+<button class="del-btn" data-down="${item.id}" data-cat="${item.category}">↓</button>
 <button class="del-btn" data-del="${item.id}">刪除</button>
       </div>
     `;
@@ -288,6 +290,22 @@ async function loadMenuManage() {
       loadMenuManage();
     };
   });
+  async function moveMenuItem(id, category, direction) {
+  const { data: items } = await sb.from("menu_items").select("id, sort_order").eq("category", category).order("sort_order");
+  const idx = items.findIndex(i => i.id === id);
+  const swapWith = direction === "up" ? idx - 1 : idx + 1;
+  if (swapWith < 0 || swapWith >= items.length) return;
+  const a = items[idx], b = items[swapWith];
+  await sb.from("menu_items").update({ sort_order: b.sort_order }).eq("id", a.id);
+  await sb.from("menu_items").update({ sort_order: a.sort_order }).eq("id", b.id);
+  loadMenuManage();
+}
+list.querySelectorAll("[data-up]").forEach(btn => {
+  btn.onclick = () => moveMenuItem(btn.dataset.up, btn.dataset.cat, "up");
+});
+list.querySelectorAll("[data-down]").forEach(btn => {
+  btn.onclick = () => moveMenuItem(btn.dataset.down, btn.dataset.cat, "down");
+});
   list.querySelectorAll("[data-edit]").forEach(btn => {
   btn.onclick = () => {
     editingId = btn.dataset.edit;
