@@ -302,18 +302,38 @@ document.getElementById("submitBtn").addEventListener("click", async () => {
 });
 
   async function loadPickupOptions() {
-  const { data } = await sb.from("settings").select("min_wait_minutes").eq("id", 1).single();
+  const { data } = await sb.from("settings").select("min_wait_minutes, open_time, close_time").eq("id", 1).single();
   const waitMin = (data && data.min_wait_minutes) || 20;
+  const openTime = (data && data.open_time) || "11:00";
+  const closeTime = (data && data.close_time) || "20:00";
+
   const now = new Date();
-  const start = new Date(now.getTime() + waitMin * 60000);
+  const today = new Date(now); today.setHours(0,0,0,0);
+
+  const [openH, openM] = openTime.split(":").map(Number);
+  const [closeH, closeM] = closeTime.split(":").map(Number);
+  const openDate = new Date(today); openDate.setHours(openH, openM, 0, 0);
+  const closeDate = new Date(today); closeDate.setHours(closeH, closeM, 0, 0);
+
+  let start = new Date(now.getTime() + waitMin * 60000);
   start.setSeconds(0, 0);
   const rem = start.getMinutes() % 5;
   if (rem) start.setMinutes(start.getMinutes() + (5 - rem));
+  if (start < openDate) start = new Date(openDate);
 
   const select = document.getElementById("tableInput");
   select.innerHTML = "";
-  for (let i = 0; i < 24; i++) {
-    const t = new Date(start.getTime() + i * 5 * 60000);
+
+  if (start >= closeDate) {
+    const opt = document.createElement("option");
+    opt.textContent = "今日已打烊";
+    opt.disabled = true;
+    select.appendChild(opt);
+    document.getElementById("submitBtn").disabled = true;
+    return;
+  }
+
+  for (let t = new Date(start); t < closeDate; t = new Date(t.getTime() + 5 * 60000)) {
     const hh = String(t.getHours()).padStart(2, "0");
     const mm = String(t.getMinutes()).padStart(2, "0");
     const opt = document.createElement("option");
