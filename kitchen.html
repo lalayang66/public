@@ -251,7 +251,7 @@ ${o.need_utensils === false ? `<div class="ticket-item" style="color:#999;">不�
 
 // ---------- Menu management ----------
 async function loadMenuManage() {
-  const { data, error } = await sb.from("menu_items").select("*").order("category").order("created_at");
+  const { data, error } = await sb.from("menu_items").select("*").order("category").order("sort_order");
   const list = document.getElementById("menuManageList");
   if (error) { list.innerHTML = `<div class="hint">載入失敗:${error.message}</div>`; return; }
   if (!data || !data.length) { list.innerHTML = `<div class="hint">目前沒有品項,請用上方表單新增</div>`; return; }
