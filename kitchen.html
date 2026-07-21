@@ -133,6 +133,7 @@ const CATEGORY_COLORS = { "招牌": "#B33F3F", "湯品": "#5C8A8A", "小菜": "#
 const CATEGORY_EMOJI = { "招牌": "🍚", "湯品": "🍲", "小菜": "🥗", "飲料": "🥤" };
 
 let currentView = "orders";
+  let editingId = null;
 document.getElementById("btnOrders").onclick = () => switchView("orders");
 document.getElementById("btnMenu").onclick = () => switchView("menu");
 
@@ -206,7 +207,8 @@ async function loadMenuManage() {
           <input type="checkbox" data-id="${item.id}" ${item.is_available ? "checked" : ""} />
           <span class="slider"></span>
         </label>
-        <button class="del-btn" data-del="${item.id}">刪除</button>
+       <button class="del-btn" data-edit="${item.id}" data-name="${item.name}" data-category="${item.category}" data-price="${item.price}" data-description="${item.description || ''}" data-photo="${item.photo_url || ''}">編輯</button>
+<button class="del-btn" data-del="${item.id}">刪除</button>
       </div>
     `;
   }).join("");
@@ -223,6 +225,18 @@ async function loadMenuManage() {
       loadMenuManage();
     };
   });
+  list.querySelectorAll("[data-edit]").forEach(btn => {
+  btn.onclick = () => {
+    editingId = btn.dataset.edit;
+    document.getElementById("newName").value = btn.dataset.name;
+    document.getElementById("newCat").value = btn.dataset.category;
+    document.getElementById("newPrice").value = btn.dataset.price;
+    document.getElementById("newDesc").value = btn.dataset.description;
+    document.getElementById("newPhoto").value = btn.dataset.photo;
+    document.getElementById("addItemBtn").textContent = "更新";
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+});
 }
 
 document.getElementById("addItemBtn").onclick = async () => {
@@ -234,16 +248,27 @@ document.getElementById("addItemBtn").onclick = async () => {
 
   if (!name || !price) { alert("請至少填寫品名與價格"); return; }
 
-  const { error } = await sb.from("menu_items").insert({
-    name, category, price, description: description || null, photo_url: photo_url || null, is_available: true
-  });
-  if (error) { alert("新增失敗:" + error.message); return; }
+  let error;
+  if (editingId) {
+    ({ error } = await sb.from("menu_items").update({
+      name, category, price, description: description || null, photo_url: photo_url || null
+    }).eq("id", editingId));
+  } else {
+    ({ error } = await sb.from("menu_items").insert({
+      name, category, price, description: description || null, photo_url: photo_url || null, is_available: true
+    }));
+  }
 
+  if (error) { alert((editingId ? "更新失敗:" : "新增失敗:") + error.message); return; }
+
+  editingId = null;
+  document.getElementById("addItemBtn").textContent = "新增";
   document.getElementById("newName").value = "";
   document.getElementById("newPrice").value = "";
   document.getElementById("newDesc").value = "";
   document.getElementById("newPhoto").value = "";
   loadMenuManage();
+};
 };
 
 loadOrders();
