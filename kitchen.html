@@ -345,6 +345,13 @@ document.getElementById("saveWaitBtn").onclick = async () => {
   document.getElementById("waitSaveMsg").textContent = error ? "儲存失敗" : "已儲存 ✓";
   setTimeout(() => { document.getElementById("waitSaveMsg").textContent = ""; }, 2000);
 };
+  document.getElementById("saveHoursBtn").onclick = async () => {
+  const open_time = document.getElementById("openTime").value;
+  const close_time = document.getElementById("closeTime").value;
+  const { error } = await sb.from("settings").update({ open_time, close_time }).eq("id", 1);
+  document.getElementById("hoursSaveMsg").textContent = error ? "儲存失敗" : "已儲存 ✓";
+  setTimeout(() => { document.getElementById("hoursSaveMsg").textContent = ""; }, 2000);
+};
 loadWaitSetting();
 loadOrders();
 setInterval(() => { if (currentView === "orders") loadOrders(); }, 8000);
