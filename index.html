@@ -145,7 +145,7 @@
       <span id="cartCount">已選 0 項</span>
       <span class="cart-total" id="cartTotal">$0</span>
     </div>
-    <textarea id="orderNote" placeholder="備註(選填,例如:少辣、不要香菜)" style="width:100%; margin-bottom:8px; padding:8px; border-radius:8px; border:none; font-size:13px; resize:none; height:44px; box-sizing:border-box;"></textarea>
+    <textarea id="orderNote" placeholder="備註(選填,例如:不筍、不要蔥花)" style="width:100%; margin-bottom:8px; padding:8px; border-radius:8px; border:none; font-size:13px; resize:none; height:44px; box-sizing:border-box;"></textarea>
 <label style="display:flex; align-items:center; gap:6px; color:#fff; font-size:13px; margin-bottom:8px;">
   <input type="checkbox" id="needUtensils" checked style="width:16px; height:16px;" />
   需要提供餐具
@@ -172,10 +172,10 @@ let activeCat = null;
 let cart = {}; // id -> qty
 
 const CATEGORY_COLORS = {
-  "招牌": "#B33F3F", "湯品": "#5C8A8A", "小菜": "#7A8450", "飲料": "#C98A3A"
+  "主食": "#B33F3F", "湯品": "#5C8A8A", "小菜": "#7A8450", "飲料": "#C98A3A"
 };
 const CATEGORY_EMOJI = {
-  "招牌": "🍚", "湯品": "🍲", "小菜": "🥗", "飲料": "🥤"
+  "主食": "🍚", "湯品": "🍲", "小菜": "🥗", "飲料": "🥤"
 };
 function thumbStyle(item) {
   if (item.photo_url) {
@@ -196,7 +196,9 @@ async function loadMenu() {
     return;
   }
   allItems = data || [];
-  categories = [...new Set(allItems.map(i => i.category))];
+  const categoryOrder = ["主食", "湯品", "小菜", "飲料"];
+const foundCats = [...new Set(allItems.map(i => i.category))];
+categories = categoryOrder.filter(c => foundCats.includes(c)).concat(foundCats.filter(c => !categoryOrder.includes(c)));
   if (!activeCat && categories.length) activeCat = categories[0];
   renderTabs();
   renderMenu();
