@@ -292,7 +292,7 @@ const { error } = await sb.from("orders").insert({
     items: items,
     status: "pending",
     note: note || null,
-    need_utensils: needUtensils
+    need_utensils: needUtensils,
   total: total
   });
 
