@@ -283,6 +283,7 @@ document.getElementById("submitBtn").addEventListener("click", async () => {
   const btn = document.getElementById("submitBtn");
   btn.disabled = true; btn.textContent = "送出中...";
 
+  const total = items.reduce((sum, it) => sum + it.price * it.qty, 0);
   const note = document.getElementById("orderNote").value.trim();
 const needUtensils = document.getElementById("needUtensils").checked;
 
@@ -292,6 +293,7 @@ const { error } = await sb.from("orders").insert({
     status: "pending",
     note: note || null,
     need_utensils: needUtensils
+  total: total
   });
 
   btn.disabled = false; btn.textContent = "送出點菜單";
