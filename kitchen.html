@@ -99,6 +99,19 @@
 
 <div class="wrap">
   <div id="ordersView">
+    <div class="wait-setting" style="margin-bottom:12px; display:flex; align-items:center; gap:8px;">
+  <span style="font-size:13px; font-weight:700;">目前最短取餐等待時間:</span>
+  <select id="waitMinutes" style="padding:4px 8px; border-radius:6px; border:1px solid #ccc;">
+    <option value="10">10 分鐘</option>
+    <option value="15">15 分鐘</option>
+    <option value="20">20 分鐘</option>
+    <option value="30">30 分鐘</option>
+    <option value="45">45 分鐘</option>
+    <option value="60">60 分鐘</option>
+  </select>
+  <button id="saveWaitBtn" class="add-btn" style="padding:4px 14px;">儲存</button>
+  <span id="waitSaveMsg" style="font-size:12px; color:green;"></span>
+</div>
     <div class="hint">依狀態分三欄,點卡片可推進進度(待處理 → 製作中 → 完成)</div>
     <div class="kanban" id="kanban"></div>
   </div>
@@ -315,6 +328,17 @@ document.getElementById("addItemBtn").onclick = async () => {
   loadMenuManage();
 };
 
+  async function loadWaitSetting() {
+  const { data } = await sb.from("settings").select("min_wait_minutes").eq("id", 1).single();
+  if (data) document.getElementById("waitMinutes").value = data.min_wait_minutes;
+}
+document.getElementById("saveWaitBtn").onclick = async () => {
+  const val = parseInt(document.getElementById("waitMinutes").value, 10);
+  const { error } = await sb.from("settings").update({ min_wait_minutes: val }).eq("id", 1);
+  document.getElementById("waitSaveMsg").textContent = error ? "儲存失敗" : "已儲存 ✓";
+  setTimeout(() => { document.getElementById("waitSaveMsg").textContent = ""; }, 2000);
+};
+loadWaitSetting();
 loadOrders();
 setInterval(() => { if (currentView === "orders") loadOrders(); }, 8000);
 </script>
