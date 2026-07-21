@@ -129,7 +129,7 @@
   <div class="topbar-inner">
     <div>
       <span class="store-name display">火雞肉飯文賢店</span>
-      <span class="table-tag">桌號 <input id="tableInput" class="table-input" value="A1" /></span>
+      <span class="table-tag">取餐時間 <input id="tableInput" type="time" class="table-input" /></span>
     </div>
   </div>
 </div>
@@ -271,7 +271,7 @@ function renderCart() {
 document.getElementById("submitBtn").addEventListener("click", async () => {
   const entries = Object.entries(cart).filter(([, q]) => q > 0);
   if (!entries.length) return;
-  const tableNo = document.getElementById("tableInput").value.trim() || "未知桌號";
+  const tableNo = document.getElementById("tableInput").value.trim() || "未指定時間";
   const items = entries.map(([id, q]) => {
     const item = allItems.find(i => i.id === id);
     return { name: item.name, qty: q, price: item.price };
