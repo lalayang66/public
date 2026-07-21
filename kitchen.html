@@ -165,7 +165,7 @@ async function loadOrders() {
         ${orders.length ? orders.map(o => `
           <button class="ticket" data-id="${o.id}" data-status="${o.status}">
             <div class="ticket-top"><span>#${o.id.slice(0,4)}</span><span>${new Date(o.created_at).toLocaleTimeString('zh-TW',{hour:'2-digit',minute:'2-digit'})}</span></div>
-            <div class="ticket-table">桌號 ${o.table_no}</div>
+            <div class="ticket-table">取餐時間 ${o.table_no}</div>
             ${(o.items || []).map(it => `<div class="ticket-item">${it.name} ×${it.qty}</div>`).join("")}
           </button>
         `).join("") : `<div class="empty-col">— 無 —</div>`}
