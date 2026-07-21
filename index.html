@@ -145,6 +145,11 @@
       <span id="cartCount">已選 0 項</span>
       <span class="cart-total" id="cartTotal">$0</span>
     </div>
+    <textarea id="orderNote" placeholder="備註(選填,例如:少辣、不要香菜)" style="width:100%; margin-bottom:8px; padding:8px; border-radius:8px; border:none; font-size:13px; resize:none; height:44px; box-sizing:border-box;"></textarea>
+<label style="display:flex; align-items:center; gap:6px; color:#fff; font-size:13px; margin-bottom:8px;">
+  <input type="checkbox" id="needUtensils" checked style="width:16px; height:16px;" />
+  需要提供餐具
+</label>
     <button class="submit-btn" id="submitBtn">送出點菜單</button>
   </div>
 </div>
@@ -280,10 +285,15 @@ document.getElementById("submitBtn").addEventListener("click", async () => {
   const btn = document.getElementById("submitBtn");
   btn.disabled = true; btn.textContent = "送出中...";
 
-  const { error } = await sb.from("orders").insert({
+  const note = document.getElementById("orderNote").value.trim();
+const needUtensils = document.getElementById("needUtensils").checked;
+
+const { error } = await sb.from("orders").insert({
     table_no: tableNo,
     items: items,
-    status: "pending"
+    status: "pending",
+    note: note || null,
+    need_utensils: needUtensils
   });
 
   btn.disabled = false; btn.textContent = "送出點菜單";
@@ -294,6 +304,8 @@ document.getElementById("submitBtn").addEventListener("click", async () => {
   }
 
   cart = {};
+  document.getElementById("orderNote").value = "";
+  document.getElementById("needUtensils").checked = true;
   renderMenu();
   renderCart();
   const overlay = document.getElementById("stampOverlay");
