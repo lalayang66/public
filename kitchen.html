@@ -133,6 +133,31 @@ const CATEGORY_COLORS = { "招牌": "#B33F3F", "湯品": "#5C8A8A", "小菜": "#
 const CATEGORY_EMOJI = { "招牌": "🍚", "湯品": "🍲", "小菜": "🥗", "飲料": "🥤" };
 
 let currentView = "orders";
+  let pendingAlertIds = new Set();
+let alertTimer = null;
+
+function playNewOrderSound() {
+  const ctx = new (window.AudioContext || window.webkitAudioContext)();
+  [880, 1046].forEach((freq, i) => {
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.frequency.value = freq;
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    gain.gain.setValueAtTime(0.3, ctx.currentTime + i * 0.18);
+    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + i * 0.18 + 0.35);
+    osc.start(ctx.currentTime + i * 0.18);
+    osc.stop(ctx.currentTime + i * 0.18 + 0.35);
+  });
+}
+
+function startAlertLoop() {
+  if (alertTimer) return;
+  alertTimer = setInterval(() => {
+    if (pendingAlertIds.size > 0) playNewOrderSound();
+    else { clearInterval(alertTimer); alertTimer = null; }
+  }, 15000);
+}
   let editingId = null;
 document.getElementById("btnOrders").onclick = () => switchView("orders");
 document.getElementById("btnMenu").onclick = () => switchView("menu");
@@ -149,6 +174,14 @@ function switchView(v) {
 // ---------- Orders kanban ----------
 async function loadOrders() {
   const { data, error } = await sb.from("orders").select("*").order("created_at", { ascending: false }).limit(60);
+if (!error && data) {
+  const stillPendingIds = new Set(data.filter(o => o.status === "pending").map(o => o.id));
+  let hasNew = false;
+  stillPendingIds.forEach(id => { if (!pendingAlertIds.has(id)) hasNew = true; });
+  pendingAlertIds = stillPendingIds;
+  if (hasNew) { playNewOrderSound(); startAlertLoop(); }
+  if (pendingAlertIds.size === 0 && alertTimer) { clearInterval(alertTimer); alertTimer = null; }
+}
   const kanban = document.getElementById("kanban");
   if (error) { kanban.innerHTML = `<div class="empty-col">載入失敗:${error.message}</div>`; return; }
 
@@ -179,6 +212,7 @@ async function loadOrders() {
       const id = btn.dataset.id;
       const status = btn.dataset.status;
       const next = status === "pending" ? "making" : status === "making" ? "done" : "done";
+      pendingAlertIds.delete(id);
       if (next === status) return;
       await sb.from("orders").update({ status: next }).eq("id", id);
       loadOrders();
