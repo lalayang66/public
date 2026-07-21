@@ -154,11 +154,6 @@ document.addEventListener("click", () => {
   if (sharedAudioCtx && sharedAudioCtx.state === "suspended") sharedAudioCtx.resume();
 }, { once: false });
 
-let sharedAudioCtx = null;
-document.addEventListener("click", () => {
-  if (sharedAudioCtx && sharedAudioCtx.state === "suspended") sharedAudioCtx.resume();
-}, { once: false });
-
 function playNewOrderSound() {
   if (!sharedAudioCtx) sharedAudioCtx = new (window.AudioContext || window.webkitAudioContext)();
   if (sharedAudioCtx.state === "suspended") sharedAudioCtx.resume();
