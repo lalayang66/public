@@ -225,7 +225,7 @@ if (!error && data) {
         <div class="kanban-col-title">${col.label}</div>
         ${orders.length ? orders.map(o => `
           <button class="ticket" data-id="${o.id}" data-status="${o.status}">
-            <div class="ticket-top"><span>#${<span>#${o.order_no}</span>}</span><span>${new Date(o.created_at).toLocaleTimeString('zh-TW',{hour:'2-digit',minute:'2-digit'})}</span></div>
+            <div class="ticket-top"><span>#${o.order_no}</span><span>${new Date(o.created_at).toLocaleTimeString('zh-TW',{hour:'2-digit',minute:'2-digit'})}</span></div>
             <div class="ticket-table">取餐時間 ${o.table_no}</div>
             ${(o.items || []).map(it => `<div class="ticket-item">${it.name} ×${it.qty}</div>`).join("")}
             ${o.note ? `<div class="ticket-item" style="margin-top:4px; color:#B33F3F;">備註:${o.note}</div>` : ""}
