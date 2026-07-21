@@ -130,7 +130,7 @@
       <div class="row">
         <input id="newName" placeholder="品名" />
         <select id="newCat">
-          <option>招牌</option><option>湯品</option><option>小菜</option><option>飲料</option>
+          <option>主食</option><option>湯品</option><option>小菜</option><option>飲料</option>
         </select>
         <input id="newPrice" type="number" placeholder="價格" style="max-width:80px;" />
       </div>
@@ -150,8 +150,8 @@ const SUPABASE_URL = "https://sjbcepsbkgfpczoxqwlc.supabase.co";
 const SUPABASE_ANON_KEY = "sb_publishable_zWX2dXB_bNiiTatEpmHB0w_blhyrqAR";
 const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-const CATEGORY_COLORS = { "招牌": "#B33F3F", "湯品": "#5C8A8A", "小菜": "#7A8450", "飲料": "#C98A3A" };
-const CATEGORY_EMOJI = { "招牌": "🍚", "湯品": "🍲", "小菜": "🥗", "飲料": "🥤" };
+const CATEGORY_COLORS = { "主食": "#B33F3F", "湯品": "#5C8A8A", "小菜": "#7A8450", "飲料": "#C98A3A" };
+const CATEGORY_EMOJI = { "主食": "🍚", "湯品": "🍲", "小菜": "🥗", "飲料": "🥤" };
 
 let currentView = "orders";
   let pendingAlertIds = new Set();
