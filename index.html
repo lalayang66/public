@@ -189,11 +189,7 @@ function thumbEmoji(item) {
 }
 
 async function loadMenu() {
-  const { data, error } = await sb
-    .from("menu_items")
-    .select("*")
-    .order("category")
-    .order("created_at");
+  const { data, error } = await sb.from("menu_items").select("*").order("category").order("sort_order");
   if (error) {
     document.getElementById("menuList").innerHTML =
       `<div class="empty-msg">菜單載入失敗:${error.message}</div>`;
